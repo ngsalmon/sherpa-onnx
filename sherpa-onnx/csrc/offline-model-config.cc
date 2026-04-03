@@ -195,7 +195,9 @@ bool OfflineModelConfig::Validate() const {
     return transducer.Validate();
   }
 
-  return true;
+  SHERPA_ONNX_LOGE("No offline model type specified. Please provide model "
+                   "config for at least one model type.");
+  return false;
 }
 
 std::string OfflineModelConfig::ToString() const {

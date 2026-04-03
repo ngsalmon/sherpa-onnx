@@ -662,20 +662,28 @@ static sherpa_onnx::OfflineRecognizerConfig GetOfflineRecognizerConfig(
 
 const SherpaOnnxOfflineRecognizer *SherpaOnnxCreateOfflineRecognizer(
     const SherpaOnnxOfflineRecognizerConfig *config) {
-  sherpa_onnx::OfflineRecognizerConfig recognizer_config =
-      GetOfflineRecognizerConfig(config);
+  try {
+    sherpa_onnx::OfflineRecognizerConfig recognizer_config =
+        GetOfflineRecognizerConfig(config);
 
-  if (!recognizer_config.Validate()) {
-    SHERPA_ONNX_LOGE("Errors in config");
+    if (!recognizer_config.Validate()) {
+      SHERPA_ONNX_LOGE("Errors in config");
+      return nullptr;
+    }
+
+    SherpaOnnxOfflineRecognizer *recognizer = new SherpaOnnxOfflineRecognizer;
+
+    recognizer->impl =
+        std::make_unique<sherpa_onnx::OfflineRecognizer>(recognizer_config);
+
+    return recognizer;
+  } catch (const std::exception &e) {
+    SHERPA_ONNX_LOGE("Failed to create offline recognizer: %s", e.what());
+    return nullptr;
+  } catch (...) {
+    SHERPA_ONNX_LOGE("Failed to create offline recognizer: unknown error");
     return nullptr;
   }
-
-  SherpaOnnxOfflineRecognizer *recognizer = new SherpaOnnxOfflineRecognizer;
-
-  recognizer->impl =
-      std::make_unique<sherpa_onnx::OfflineRecognizer>(recognizer_config);
-
-  return recognizer;
 }
 
 void SherpaOnnxOfflineRecognizerSetConfig(
@@ -1297,8 +1305,19 @@ const SherpaOnnxVoiceActivityDetector *SherpaOnnxCreateVoiceActivityDetector(
   }
 
   SherpaOnnxVoiceActivityDetector *p = new SherpaOnnxVoiceActivityDetector;
-  p->impl = std::make_unique<sherpa_onnx::VoiceActivityDetector>(
-      vad_config, buffer_size_in_seconds);
+
+  try {
+    p->impl = std::make_unique<sherpa_onnx::VoiceActivityDetector>(
+        vad_config, buffer_size_in_seconds);
+  } catch (const std::exception &e) {
+    SHERPA_ONNX_LOGE("Failed to create VAD: %s", e.what());
+    delete p;
+    return nullptr;
+  } catch (...) {
+    SHERPA_ONNX_LOGE("Failed to create VAD: unknown error");
+    delete p;
+    return nullptr;
+  }
 
   return p;
 }
@@ -2206,7 +2225,19 @@ SherpaOnnxCreateSpeakerEmbeddingExtractor(
 
   auto p = new SherpaOnnxSpeakerEmbeddingExtractor;
 
-  p->impl = std::make_unique<sherpa_onnx::SpeakerEmbeddingExtractor>(c);
+  try {
+    p->impl = std::make_unique<sherpa_onnx::SpeakerEmbeddingExtractor>(c);
+  } catch (const std::exception &e) {
+    SHERPA_ONNX_LOGE("Failed to create speaker embedding extractor: %s",
+                     e.what());
+    delete p;
+    return nullptr;
+  } catch (...) {
+    SHERPA_ONNX_LOGE(
+        "Failed to create speaker embedding extractor: unknown error");
+    delete p;
+    return nullptr;
+  }
 
   return p;
 }
