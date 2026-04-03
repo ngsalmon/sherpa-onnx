@@ -172,7 +172,13 @@ Ort::SessionOptions GetSessionOptionsImpl(
   }
 
   if (config.find("ProfilingFilePrefix") != config.end()) {
+#ifdef _WIN32
+    std::string prefix = config["ProfilingFilePrefix"];
+    std::wstring wprefix(prefix.begin(), prefix.end());
+    sess_opts.EnableProfiling(wprefix.c_str());
+#else
     sess_opts.EnableProfiling(config["ProfilingFilePrefix"].c_str());
+#endif
     config.erase("ProfilingFilePrefix");
   }
 
