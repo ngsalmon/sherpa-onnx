@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -76,7 +77,7 @@ class OfflineCohereTranscribeModel::Impl {
     SHERPA_ONNX_LOGE(
         "Please copy files to SD card for Cohere Transcribe. It does not "
         "support using a manager");
-    SHERPA_ONNX_EXIT(-1);
+    throw std::runtime_error("Cohere Transcribe model initialization failed");
   }
 
   std::pair<Ort::Value, Ort::Value> ForwardEncoder(Ort::Value features) {
@@ -163,7 +164,7 @@ class OfflineCohereTranscribeModel::Impl {
       SHERPA_ONNX_LOGE(
           "Please pass buffer data or initialize encoder session outside of "
           "this function");
-      SHERPA_ONNX_EXIT(-1);
+      throw std::runtime_error("Cohere Transcribe model initialization failed");
     }
 
     GetInputNames(encoder_sess_.get(), &encoder_input_names_,
@@ -193,7 +194,7 @@ class OfflineCohereTranscribeModel::Impl {
       SHERPA_ONNX_LOGE(
           "Expect model type 'cohere-transcribe-03-2026'. Given: '%s'",
           model_type.c_str());
-      SHERPA_ONNX_EXIT(-1);
+      throw std::runtime_error("Cohere Transcribe model initialization failed");
     }
 
     auto shape = encoder_sess_->GetOutputTypeInfo(0)
@@ -203,7 +204,7 @@ class OfflineCohereTranscribeModel::Impl {
     if (shape.size() != 4) {
       SHERPA_ONNX_LOGE("Expect 4-d for encoder output 0. Given: %d",
                        static_cast<int32_t>(shape.size()));
-      SHERPA_ONNX_EXIT(-1);
+      throw std::runtime_error("Cohere Transcribe model initialization failed");
     }
 
     num_layers_ = shape[0];
@@ -218,7 +219,7 @@ class OfflineCohereTranscribeModel::Impl {
       SHERPA_ONNX_LOGE(
           "Please pass buffer data or initialize decoder session outside of "
           "this function");
-      SHERPA_ONNX_EXIT(-1);
+      throw std::runtime_error("Cohere Transcribe model initialization failed");
     }
 
     GetInputNames(decoder_sess_.get(), &decoder_input_names_,
@@ -239,13 +240,13 @@ class OfflineCohereTranscribeModel::Impl {
     if (shape.size() != 5) {
       SHERPA_ONNX_LOGE("Expect 5-d for decoder output 1. Given: %d",
                        static_cast<int32_t>(shape.size()));
-      SHERPA_ONNX_EXIT(-1);
+      throw std::runtime_error("Cohere Transcribe model initialization failed");
     }
 
     if (shape[0] != num_layers_) {
       SHERPA_ONNX_LOGE("Expected num_layers %d. Given: %d", num_layers_,
                        static_cast<int32_t>(shape[0]));
-      SHERPA_ONNX_EXIT(-1);
+      throw std::runtime_error("Cohere Transcribe model initialization failed");
     }
 
     num_heads_ = shape[2];
