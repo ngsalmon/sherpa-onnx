@@ -190,11 +190,14 @@ class OfflineCohereTranscribeModel::Impl {
 
     std::string model_type;
     SHERPA_ONNX_READ_META_DATA_STR_ALLOW_EMPTY(model_type, "model_type");
-    if (!Contains(model_type, "cohere-transcribe")) {
+    if (!model_type.empty() && !Contains(model_type, "cohere-transcribe")) {
       SHERPA_ONNX_LOGE(
           "Expect model type 'cohere-transcribe-03-2026'. Given: '%s'",
           model_type.c_str());
       throw std::runtime_error("Cohere Transcribe model initialization failed");
+    }
+    if (model_type.empty()) {
+      SHERPA_ONNX_LOGE("model_type metadata not set in encoder ONNX, assuming cohere-transcribe");
     }
 
     auto shape = encoder_sess_->GetOutputTypeInfo(0)
